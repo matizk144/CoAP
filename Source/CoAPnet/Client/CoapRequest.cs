@@ -1,14 +1,10 @@
-﻿using System;
+﻿namespace CoAPnet.Client;
 
-namespace CoAPnet.Client
+public sealed class CoapRequest
 {
-    public sealed class CoapRequest
-    {
-        public CoapRequestMethod Method { get; set; } = CoapRequestMethod.Get;
+    public CoapRequestMethod Method { get; internal set; } = CoapRequestMethod.Get;
 
-        public CoapRequestOptions Options { get; set; } = new CoapRequestOptions();
+    public CoapRequestOptions Options { get; internal set; } = new();
 
-        public ArraySegment<byte> Payload { get; set; }
-    }
+    public ArraySegment<byte> Payload { get; internal set; }
 }
-

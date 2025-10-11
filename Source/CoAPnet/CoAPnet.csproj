@@ -1,5 +1,11 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
+	<PropertyGroup>
+		<TargetFramework>net9.0</TargetFramework>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<Nullable>enable</Nullable>
+	</PropertyGroup>
+
 	<Target Name="ImportReleaseNotes" BeforeTargets="GenerateNuspec">
 		<ReadLinesFromFile File="..\..\Build\ReleaseNotes.md">
 			<Output TaskParameter="Lines" ItemName="ReleaseNotes" />
@@ -10,8 +16,6 @@
 	</Target>
 
 	<PropertyGroup>
-		<TargetFrameworks>net452;net5.0;net6.0;netstandard1.3;netstandard2.0</TargetFrameworks>
-
 		<AssemblyName>CoAPnet</AssemblyName>
 		<RootNamespace>CoAPnet</RootNamespace>
 		<GeneratePackageOnBuild>True</GeneratePackageOnBuild>
@@ -37,17 +41,14 @@
 		<EmbedUntrackedSources>true</EmbedUntrackedSources>
 		<ContinuousIntegrationBuild>true</ContinuousIntegrationBuild>
 		<PackageLicenseFile>LICENSE</PackageLicenseFile>
-		<LangVersion>7.3</LangVersion>
+		<LangVersion>latest</LangVersion>
 		<GenerateDocumentationFile>true</GenerateDocumentationFile>
 		<NoWarn>CS1591</NoWarn>
 	</PropertyGroup>
 
 	<ItemGroup>
 		<PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.1.1" PrivateAssets="All" />
-	</ItemGroup>
-
-	<ItemGroup Condition="'$(TargetFramework)'=='uap10.0'">
-		<PackageReference Include="Microsoft.NETCore.UniversalWindowsPlatform" Version="6.2.10" />
+		<PackageReference Include="Microsoft.Extensions.Logging" Version="8.0.0" />
 	</ItemGroup>
 
 	<ItemGroup>

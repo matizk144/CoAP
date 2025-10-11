@@ -1,15 +1,14 @@
-﻿namespace CoAPnet.Protocol.Options
-{
-    public sealed class CoapMessageOptionEmptyValue : CoapMessageOptionValue
-    {
-        public override bool Equals(object obj)
-        {
-            return obj is CoapMessageOptionEmptyValue;
-        }
+﻿namespace CoAPnet.Protocol.Options;
 
-        public override int GetHashCode()
-        {
-            return 0;
-        }
+internal record CoapMessageOptionEmptyValue : ICoapMessageOptionValue
+{
+    public virtual bool Equals(CoapMessageOptionEmptyValue? obj)
+    {
+        return obj != null;
+    }
+
+    public override int GetHashCode()
+    {
+        return 0;
     }
 }

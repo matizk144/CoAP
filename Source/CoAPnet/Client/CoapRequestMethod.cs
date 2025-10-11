@@ -1,11 +1,10 @@
-﻿namespace CoAPnet.Client
+﻿namespace CoAPnet.Client;
+
+public enum CoapRequestMethod
 {
-    public enum CoapRequestMethod
-    {
-        Get,
-        Post,
-        Put,
-        Delete
-    }
+    Get,
+    Post,
+    Put,
+    Delete
 }
 

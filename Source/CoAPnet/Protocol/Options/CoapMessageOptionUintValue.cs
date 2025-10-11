@@ -1,30 +1,14 @@
-﻿namespace CoAPnet.Protocol.Options
+﻿namespace CoAPnet.Protocol.Options;
+
+internal record CoapMessageOptionUintValue(uint Value) : ICoapMessageOptionValue
 {
-    public sealed class CoapMessageOptionUintValue : CoapMessageOptionValue
+    public virtual bool Equals(CoapMessageOptionUintValue? obj)
     {
-        public CoapMessageOptionUintValue(uint value)
-        {
-            Value = value;
-        }
+        return obj is not null && Value.Equals(obj.Value);
+    }
 
-        public uint Value
-        {
-            get;
-        }
-
-        public override bool Equals(object obj)
-        {
-            if (obj is CoapMessageOptionUintValue other)
-            {
-                return Value.Equals(other.Value);
-            }
-
-            return false;
-        }
-
-        public override int GetHashCode()
-        {
-            return Value.GetHashCode();
-        }
+    public override int GetHashCode()
+    {
+        return Value.GetHashCode();
     }
 }

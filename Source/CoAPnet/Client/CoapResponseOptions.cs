@@ -1,23 +1,22 @@
 ﻿using CoAPnet.Protocol.Options;
 
-namespace CoAPnet.Client
+namespace CoAPnet.Client;
+
+public sealed class CoapResponseOptions
 {
-    public sealed class CoapResponseOptions
+    public CoapMessageContentFormat? ContentFormat
     {
-        public CoapMessageContentFormat? ContentFormat
-        {
-            get; set;
-        }
+        get; internal set;
+    }
 
-        public int MaxAge
-        {
-            get; set;
-        }
+    public int MaxAge
+    {
+        get; internal set;
+    }
 
-        public byte[] ETag
-        {
-            get; set;
-        }
+    public byte[]? ETag
+    {
+        get; internal set;
     }
 }
 

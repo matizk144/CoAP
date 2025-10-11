@@ -1,72 +1,70 @@
 ﻿using CoAPnet.Internal;
-using System;
 using System.Runtime.CompilerServices;
 
-namespace CoAPnet.Protocol.Encoding
+namespace CoAPnet.Protocol.Encoding;
+
+internal sealed class CoapMessageWriter : IDisposable
 {
-    public sealed class CoapMessageWriter : IDisposable
+    readonly MemoryBuffer _memoryBuffer = new MemoryBuffer(128);
+
+    int _bitOffset = 7;
+    byte _byteCache;
+
+    public void WriteBits(int data, int count)
     {
-        readonly MemoryBuffer _memoryBuffer = new MemoryBuffer(128);
-
-        int _bitOffset = 7;
-        byte _byteCache;
-
-        public void WriteBits(int data, int count)
+        // Write each bit in backward order as per RFC.
+        for (var i = count - 1; i >= 0; i--)
         {
-            // Write each bit in backward order as per RFC.
-            for (var i = count - 1; i >= 0; i--)
+            var bit = (data >> i & 1) != 0;
+            if (bit)
             {
-                var bit = (data >> i & 1) != 0;
-                if (bit)
-                {
-                    _byteCache |= (byte)(1 << _bitOffset);
-                }
-
-                _bitOffset--;
-
-                if (_bitOffset < 0)
-                {
-                    CommitByteCache();
-                }
+                _byteCache |= (byte)(1 << _bitOffset);
             }
-        }
 
-        public void WriteByte(byte @byte)
-        {
-            _memoryBuffer.Write(@byte);
-        }
+            _bitOffset--;
 
-        public void WriteBytes(byte[] bytes)
-        {
-            _memoryBuffer.Write(bytes);
-        }
-
-        public void WriteBytes(ArraySegment<byte> bytes)
-        {
-            _memoryBuffer.Write(bytes);
-        }
-
-        public ArraySegment<byte> ToArray()
-        {
-            if (_bitOffset != 7)
+            if (_bitOffset < 0)
             {
                 CommitByteCache();
             }
-
-            return _memoryBuffer.GetBuffer();
         }
+    }
 
-        public void Dispose()
+    public void WriteByte(byte @byte)
+    {
+        _memoryBuffer.Write(@byte);
+    }
+
+    public void WriteBytes(byte[] bytes)
+    {
+        _memoryBuffer.Write(bytes);
+    }
+
+    public void WriteBytes(ArraySegment<byte> bytes)
+    {
+        _memoryBuffer.Write(bytes);
+    }
+
+    public ArraySegment<byte> ToArray()
+    {
+        if (_bitOffset != 7)
         {
-            _memoryBuffer.Dispose();
+            CommitByteCache();
         }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        void CommitByteCache()
-        {
-            _memoryBuffer.Write(_byteCache);
-            _bitOffset = 7;
-            _byteCache = 0x0;
-        }
+        return _memoryBuffer.GetBuffer();
+    }
+
+    public void Dispose()
+    {
+        _memoryBuffer.Dispose();
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    void CommitByteCache()
+    {
+        _memoryBuffer.Write(_byteCache);
+        _bitOffset = 7;
+        _byteCache = 0x0;
     }
 }

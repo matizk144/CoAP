@@ -1,10 +1,9 @@
-﻿namespace CoAPnet.Protocol
-{
-    public static class CoapDefaultPort
-    {
-        // Default IANA ports.
-        public static int Unencrypted { get; } = 5683;
+﻿namespace CoAPnet.Protocol;
 
-        public static int Encrypted { get; } = 5684;
-    }
+internal static class CoapDefaultPort
+{
+    // Default IANA ports.
+    public static int Unencrypted => 5683;
+
+    public static int Encrypted => 5684;
 }

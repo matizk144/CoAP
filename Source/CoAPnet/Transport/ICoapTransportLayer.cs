@@ -1,15 +1,8 @@
-﻿using System;
-using System.Threading;
-using System.Threading.Tasks;
+﻿namespace CoAPnet.Transport;
 
-namespace CoAPnet.Transport
+public interface ICoapTransportLayer : IDisposable
 {
-    public interface ICoapTransportLayer : IDisposable
-    {
-        Task ConnectAsync(CoapTransportLayerConnectOptions connectOptions, CancellationToken cancellationToken);
-
-        Task SendAsync(ArraySegment<byte> buffer, CancellationToken cancellationToken);
-
-        Task<int> ReceiveAsync(ArraySegment<byte> buffer, CancellationToken cancellationToken);
-    }
+    Task ConnectAsync(CoapTransportLayerConnectOptions connectOptions, CancellationToken cancellationToken);
+    Task SendAsync(ArraySegment<byte> buffer, CancellationToken cancellationToken);
+    Task<int> ReceiveAsync(ArraySegment<byte> buffer, CancellationToken cancellationToken);
 }

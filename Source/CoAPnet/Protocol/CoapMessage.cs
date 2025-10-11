@@ -1,39 +1,18 @@
 ﻿using CoAPnet.Protocol.Options;
-using System;
-using System.Collections.Generic;
 
-namespace CoAPnet.Protocol
+namespace CoAPnet.Protocol;
+
+internal sealed class CoapMessage
 {
-    public sealed class CoapMessage
-    {
-        public CoapMessageType Type
-        {
-            get; set;
-        }
+    public required CoapMessageType Type { get; init; }
 
-        public byte[] Token
-        {
-            get; set;
-        }
+    public byte[]? Token { get; init; }
 
-        public CoapMessageCode Code
-        {
-            get; set;
-        }
+    public required CoapMessageCode Code { get; init; }
 
-        public ushort Id
-        {
-            get; set;
-        }
+    public required ushort Id { get; init; }
 
-        public List<CoapMessageOption> Options
-        {
-            get; set;
-        }
+    public required IReadOnlyCollection<CoapMessageOption> Options { get; init; }
 
-        public ArraySegment<byte> Payload
-        {
-            get; set;
-        }
-    }
+    public ArraySegment<byte> Payload { get; init; }
 }

@@ -1,21 +1,4 @@
-﻿namespace CoAPnet.Client
-{
-    public sealed class CoapResponse
-    {
-        public CoapResponseStatusCode StatusCode
-        {
-            get; set;
-        }
+﻿namespace CoAPnet.Client;
 
-        public CoapResponseOptions Options
-        {
-            get; set;
-        }
-
-        public byte[] Payload
-        {
-            get; set;
-        }
-    }
-}
+public record CoapResponse(CoapResponseStatusCode StatusCode, CoapResponseOptions Options, byte[] Payload);
 

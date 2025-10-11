@@ -1,12 +1,8 @@
 ﻿using System.Net;
 
-namespace CoAPnet.Transport
+namespace CoAPnet.Transport;
+
+public class CoapTransportLayerConnectOptions
 {
-    public class CoapTransportLayerConnectOptions
-    {
-        public IPEndPoint EndPoint
-        {
-            get; set;
-        }
-    }
+    public required IPEndPoint EndPoint { get; init; }
 }

@@ -1,78 +1,64 @@
 ﻿using CoAPnet.Exceptions;
-using CoAPnet.Logging;
-using System;
-using System.Threading;
-using System.Threading.Tasks;
+using Microsoft.Extensions.Logging;
+namespace CoAPnet.Transport;
 
-namespace CoAPnet.Transport
+internal sealed class CoapTransportLayerAdapter(ICoapTransportLayer transportLayer, ILogger logger, string endpointId) : IDisposable
 {
-    public sealed class CoapTransportLayerAdapter : IDisposable
+    public async Task ConnectAsync(CoapTransportLayerConnectOptions? connectOptions, CancellationToken cancellationToken)
     {
-        readonly ICoapTransportLayer _transportLayer;
-        readonly CoapNetLogger _logger;
-
-        public CoapTransportLayerAdapter(ICoapTransportLayer transportLayer, CoapNetLogger logger)
+        if (connectOptions == null)
         {
-            _transportLayer = transportLayer ?? throw new ArgumentNullException(nameof(transportLayer));
-            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+            throw new ArgumentNullException(nameof(connectOptions));
         }
 
-        public async Task ConnectAsync(CoapTransportLayerConnectOptions connectOptions, CancellationToken cancellationToken)
+        cancellationToken.ThrowIfCancellationRequested();
+
+        try
         {
-            if (connectOptions == null)
-            {
-                throw new ArgumentNullException(nameof(connectOptions));
-            }
-
-            cancellationToken.ThrowIfCancellationRequested();
-
-            try
-            {
-                _logger.Information(nameof(CoapTransportLayerAdapter), "Connecting with '{0}'...", connectOptions.EndPoint);
-                await _transportLayer.ConnectAsync(connectOptions, cancellationToken).ConfigureAwait(false);
-            }
-            catch (OperationCanceledException)
-            {
-                throw;
-            }
-            catch (Exception exception)
-            {
-                throw new CoapCommunicationException("Error while connecting with CoAP server.", exception);
-            }
+            logger.LogInformation("{EndpointId}: {Module}: Connecting...", endpointId, nameof(CoapTransportLayerAdapter));
+            await transportLayer.ConnectAsync(connectOptions, cancellationToken).ConfigureAwait(false);
         }
-
-        public async Task SendAsync(ArraySegment<byte> buffer, CancellationToken cancellationToken)
+        catch (OperationCanceledException)
         {
-            try
-            {
-                _logger.Trace(nameof(CoapTransportLayerAdapter), "Sending {0} bytes...", buffer.Count);
-                await _transportLayer.SendAsync(buffer, cancellationToken).ConfigureAwait(false);
-            }
-            catch (Exception exception)
-            {
-                throw new CoapCommunicationException("Error while sending CoAP message.", exception);
-            }
+            throw;
         }
-
-        public async Task<int> ReceiveAsync(ArraySegment<byte> receiveBuffer, CancellationToken cancellationToken)
+        catch (Exception exception)
         {
-            try
-            {
-                var receivedBytes = await _transportLayer.ReceiveAsync(receiveBuffer, cancellationToken).ConfigureAwait(false);
-
-                _logger.Trace(nameof(CoapTransportLayerAdapter), "Received {0} bytes...", receivedBytes);
-
-                return receivedBytes;
-            }
-            catch (Exception exception)
-            {
-                throw new CoapCommunicationException("Error receiving CoAP messages.", exception);
-            }
+            throw new CoapCommunicationException("Error while connecting with CoAP server.", exception);
         }
+    }
 
-        public void Dispose()
+    public async Task SendAsync(ArraySegment<byte> buffer, CancellationToken cancellationToken)
+    {
+        try
         {
-            _transportLayer?.Dispose();
+            logger.LogTrace("{EndpointId}: {Module}: Sending {BytesCount} bytes...", endpointId, nameof(CoapTransportLayerAdapter), buffer.Count);
+            await transportLayer.SendAsync(buffer, cancellationToken).ConfigureAwait(false);
         }
+        catch (Exception exception)
+        {
+            throw new CoapCommunicationException("Error while sending CoAP message.", exception);
+        }
+    }
+
+    public async Task<int> ReceiveAsync(ArraySegment<byte> receiveBuffer, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var receivedBytes = await transportLayer.ReceiveAsync(receiveBuffer, cancellationToken).ConfigureAwait(false);
+
+            logger.LogTrace("{EndpointId}: {Module}: Received {BytesCount} bytes...", endpointId, nameof(CoapTransportLayerAdapter), receivedBytes);
+
+            return receivedBytes;
+        }
+        catch (Exception exception)
+        {
+            throw new CoapCommunicationException("Error receiving CoAP messages.", exception);
+        }
+    }
+
+    public void Dispose()
+    {
+        transportLayer.Dispose();
     }
 }

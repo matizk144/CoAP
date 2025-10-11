@@ -1,52 +1,29 @@
-﻿namespace CoAPnet.Protocol
+﻿namespace CoAPnet.Protocol;
+
+internal record CoapMessageCode(byte Class, byte Detail)
 {
-    public sealed class CoapMessageCode
+    public override string ToString()
     {
-        public CoapMessageCode(byte @class, byte detail)
+        return $"{Class}.{Detail.ToString().PadLeft(2, '0')}";
+    }
+
+    public override int GetHashCode()
+    {
+        return Class.GetHashCode() ^ Detail.GetHashCode();
+    }
+
+    public virtual bool Equals(CoapMessageCode? other)
+    {
+        if (other == null)
         {
-            Class = @class;
-            Detail = detail;
+            return false;
         }
 
-        public byte Class
+        if (ReferenceEquals(this, other))
         {
-            get;
+            return true;
         }
 
-        public byte Detail
-        {
-            get;
-        }
-
-        public override string ToString()
-        {
-            return $"{Class}.{Detail.ToString().PadLeft(2, '0')}";
-        }
-
-        public override int GetHashCode()
-        {
-            return Class.GetHashCode() ^ Detail.GetHashCode();
-        }
-
-        public override bool Equals(object other)
-        {
-            if (other == null)
-            {
-                return false;
-            }
-
-            if (ReferenceEquals(this, other))
-            {
-                return true;
-            }
-
-            var otherCode = other as CoapMessageCode;
-            if (otherCode == null)
-            {
-                return false;
-            }
-
-            return Class.Equals(otherCode.Class) && Detail.Equals(otherCode.Detail);
-        }
+        return Class.Equals(other.Class) && Detail.Equals(other.Detail);
     }
 }

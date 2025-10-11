@@ -1,32 +1,19 @@
-﻿using System.Linq;
+﻿namespace CoAPnet.Protocol.Options;
 
-namespace CoAPnet.Protocol.Options
+internal record CoapMessageOptionOpaqueValue(byte[] Value) : ICoapMessageOptionValue
 {
-    public sealed class CoapMessageOptionOpaqueValue : CoapMessageOptionValue
+    public virtual bool Equals(CoapMessageOptionOpaqueValue? obj)
     {
-        public CoapMessageOptionOpaqueValue(byte[] value)
+        if (obj == null)
         {
-            Value = value;
-        }
-
-        public byte[] Value
-        {
-            get;
-        }
-
-        public override bool Equals(object obj)
-        {
-            if (obj is CoapMessageOptionOpaqueValue other)
-            {
-                return Value.SequenceEqual(other.Value);
-            }
-
             return false;
         }
 
-        public override int GetHashCode()
-        {
-            return Value == null ? 0 : Value.GetHashCode();
-        }
+        return Value.SequenceEqual(obj.Value);
+    }
+
+    public override int GetHashCode()
+    {
+        return Value.GetHashCode();
     }
 }
