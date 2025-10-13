@@ -3,7 +3,6 @@ using CoAPnet.Message;
 using CoAPnet.Protocol;
 using CoAPnet.Protocol.BlockTransfer;
 using CoAPnet.Protocol.Options;
-using Microsoft.Extensions.Options;
 
 namespace CoAPnet.Client;
 
@@ -27,20 +26,44 @@ internal sealed class BlockwiseSequentialCoapClient : BaseCoapClient
 
         await _requestSemaphore.WaitAsync(cancellationToken);
 
-        BlockwisePayloadSize requestBlockSize = _options?.RequestPayloadSize ?? BlockwisePayloadSize._1024;
-        BlockwisePayloadSize responseBlockSize = _options?.ResponsePayloadSize ?? BlockwisePayloadSize._1024;
+        try
+        {
+            CoapMessage? lastCoapMessage = null;
+            if (request.Payload.Count > 0)
+            {
+                lastCoapMessage = await SendRequest(request, cancellationToken);
+            }
+            var response = await GetResponse(request, lastCoapMessage, cancellationToken);
 
-        byte[] currentPayload = request.Payload.Count > 0 ? [.. request.Payload.ToArray()] : [];
-        byte[] responseByte = [];
-        ushort requestFrameNumber = 0;
-        ushort responseFrameNumber = 0;
-        bool hasResponseMoreData = true;
-        CoapResponse? blockCoapResponse = null;
+            return _messageToResponseConverter.Convert(response.LastCoapMessage, response.Bytes);
+        }
+        finally
+        {
+            _requestSemaphore.Release();
+        }
+    }
+
+    private async Task<CoapMessage> SendRequest(CoapRequest request, CancellationToken cancellationToken)
+    {
+        if (request.Payload.Count <= 0)
+        {
+            throw new ArgumentException("Request payload is empty", nameof(request));
+        }
+
+        BlockwisePayloadSize? requestBlockSize = _options?.RequestPayloadSize;
+
+        byte[] currentPayload = [.. request.Payload.ToArray()];
+        int bytesAlreadySend = 0;
+        CoapMessage? responseCoapMessage = null;
+
         while (currentPayload.Length > 0)
         {
             bool hasMoreData = false;
             byte[] blockPayload;
-            if (currentPayload.Length > (int)requestBlockSize)
+            CoapBlockTransferOptionValue? block1Option = null;
+            CoapBlockTransferOptionValue? block2Option = null;
+
+            if (requestBlockSize != null && currentPayload.Length > (int)requestBlockSize)
             {
                 hasMoreData = true;
                 blockPayload = currentPayload[..(int)requestBlockSize];
@@ -52,22 +75,23 @@ internal sealed class BlockwiseSequentialCoapClient : BaseCoapClient
                 currentPayload = [];
             }
 
-            var block1Option = new CoapBlockTransferOptionValue
+            if (requestBlockSize != null)
             {
-                Number = requestFrameNumber++,
-                HasFollowingBlocks = hasMoreData,
-                Size = (ushort)requestBlockSize
-            };
+                block1Option = new CoapBlockTransferOptionValue
+                {
+                    Number = CalculateBlockNum(bytesAlreadySend, requestBlockSize.Value),
+                    HasFollowingBlocks = hasMoreData,
+                    Size = (ushort)requestBlockSize
+                };
+            }
 
-            CoapBlockTransferOptionValue? block2Option = null;
-
-            if (!block1Option.HasFollowingBlocks)
+            if (!hasMoreData && _options?.RequestPayloadSize != null)
             {
                 block2Option = new CoapBlockTransferOptionValue()
                 {
-                    Number = responseFrameNumber++,
+                    Number = 0,
                     HasFollowingBlocks = false,
-                    Size = (ushort)responseBlockSize
+                    Size = (ushort)(_options?.RequestPayloadSize!.Value!)
                 };
             }
 
@@ -82,64 +106,72 @@ internal sealed class BlockwiseSequentialCoapClient : BaseCoapClient
 
             var requestMessage = _requestToMessageConverter.Convert(blockCoapRequest, blockwiseOptions);
 
-            var responseCoapMessage = await Send(requestMessage, cancellationToken);
-            UpdateBlockWiseMessageOptions(responseCoapMessage.Options, ref requestBlockSize, ref responseBlockSize);
-            hasResponseMoreData = GetHasResponseMoreData(responseCoapMessage.Options);
-
-            if (responseCoapMessage.Payload.Count > 0)
-            {
-                responseByte = [.. responseByte, .. responseCoapMessage.Payload.ToArray()];
-            }
-
-            blockCoapResponse = _messageToResponseConverter.Convert(responseCoapMessage, responseCoapMessage.Payload);
+            responseCoapMessage = await Send(requestMessage, cancellationToken);
+            bytesAlreadySend += blockPayload.Length;
+            requestBlockSize = GetBlock1Size(responseCoapMessage.Options);
         }
 
-        while (hasResponseMoreData)
+        return responseCoapMessage!;
+    }
+
+    private async Task<(byte[] Bytes, CoapMessage LastCoapMessage)> GetResponse(CoapRequest generalCoapRequest, CoapMessage? lastCoapMessage, CancellationToken cancellationToken)
+    {
+        bool hasMoreData;
+        BlockwisePayloadSize? responseBlockSize;
+        byte[] responseBytes;
+        CoapMessage? lastResponseCoapMessage = null;
+
+        if (lastCoapMessage != null)
         {
-            var block2Option = new CoapBlockTransferOptionValue
+            hasMoreData = GetHasResponseMoreData(lastCoapMessage.Options);
+            responseBlockSize = GetBlock2Size(lastCoapMessage.Options);
+            responseBytes = [.. lastCoapMessage.Payload.ToArray()];
+            lastResponseCoapMessage = lastCoapMessage;
+        }
+        else
+        {
+            hasMoreData = true;
+            responseBlockSize = _options?.ResponsePayloadSize;
+            responseBytes = [];
+        }
+
+        int bytesAlreadyReceived = responseBytes.Length;
+
+        while (hasMoreData)
+        {
+            CoapBlockTransferOptionValue? block2Option = null;
+            if (responseBlockSize != null)
             {
-                Number = responseFrameNumber++,
-                Size = (ushort)responseBlockSize
-            };
+                block2Option = new CoapBlockTransferOptionValue
+                {
+                    Number = CalculateBlockNum(bytesAlreadyReceived, responseBlockSize.Value),
+                    Size = (ushort)responseBlockSize
+                };
+            }
 
             var blockwiseOptions = GetBlockwiseOptions(block2Option: block2Option);
 
             var blockCoapRequest = new CoapRequest()
             {
-                Method = request.Method,
-                Options = request.Options,
+                Method = generalCoapRequest.Method,
+                Options = generalCoapRequest.Options,
             };
 
             var requestMessage = _requestToMessageConverter.Convert(blockCoapRequest, blockwiseOptions);
 
-            var responseCoapMessage = await Send(requestMessage, cancellationToken);
-            UpdateBlockWiseMessageOptions(responseCoapMessage.Options, ref requestBlockSize, ref responseBlockSize);
-            hasResponseMoreData = GetHasResponseMoreData(responseCoapMessage.Options);
-
-            if (responseCoapMessage.Payload.Count > 0)
-            {
-                responseByte = [.. responseByte, .. responseCoapMessage.Payload.ToArray()];
-            }
-
-            blockCoapResponse = _messageToResponseConverter.Convert(responseCoapMessage, responseCoapMessage.Payload);
+            lastResponseCoapMessage = await Send(requestMessage, cancellationToken);
+            responseBytes = [.. responseBytes, .. lastResponseCoapMessage.Payload.ToArray()];
+            bytesAlreadyReceived = responseBytes.Length;
+            responseBlockSize = GetBlock2Size(lastResponseCoapMessage.Options);
+            hasMoreData = GetHasResponseMoreData(lastResponseCoapMessage.Options);
         }
 
-        var coapRespone = blockCoapResponse! with { Payload = responseByte };
+        return (responseBytes, lastResponseCoapMessage!);
+    }
 
-        _requestSemaphore.Release();
-
-        return coapRespone;
-
-        //try
-        //{
-        //    var response = await Send(requestMessage, cancellationToken);
-        //    var payload = response!.Payload;
-        //    return _messageToResponseConverter.Convert(response, payload);
-        //}
-        //finally
-        //{
-        //    _requestSemaphore.Release();
-        //}
+    private ushort CalculateBlockNum(int bytesAlreadySendReceived, BlockwisePayloadSize blockSize)
+    {
+        return (ushort)(bytesAlreadySendReceived / (int)blockSize);
     }
 
     private IReadOnlyCollection<CoapMessageOption> GetBlockwiseOptions(CoapBlockTransferOptionValue? block1Option = null, CoapBlockTransferOptionValue? block2Option = null)
@@ -162,41 +194,44 @@ internal sealed class BlockwiseSequentialCoapClient : BaseCoapClient
         return blockwiseOptions;
     }
 
-    private void UpdateBlockWiseMessageOptions(IReadOnlyCollection<CoapMessageOption> options, ref BlockwisePayloadSize block1Size, ref BlockwisePayloadSize block2Size)
+    private BlockwisePayloadSize? GetBlock1Size (IReadOnlyCollection<CoapMessageOption> options)
     {
         var block1Option = options.SingleOrDefault(op => op.Number == CoapMessageOptionNumber.Block1);
-        if (block1Option != null)
-        {
-            block1Size = CoapBlockTransferOptionValueDecoder
-                    .Decode(((CoapMessageOptionUintValue)block1Option.Value).Value).Size switch
-                {
-                    16 => BlockwisePayloadSize._16,
-                    32 => BlockwisePayloadSize._32,
-                    64 => BlockwisePayloadSize._64,
-                    128 => BlockwisePayloadSize._128,
-                    256 => BlockwisePayloadSize._256,
-                    512 => BlockwisePayloadSize._512,
-                    1024 => BlockwisePayloadSize._1024,
-                    _ => throw new ArgumentOutOfRangeException()
-                };
-        }
 
-        var block2Option = options.SingleOrDefault(op => op.Number == CoapMessageOptionNumber.Block2);
-        if (block2Option != null)
-        {
-            block2Size = CoapBlockTransferOptionValueDecoder
-                    .Decode(((CoapMessageOptionUintValue)block2Option.Value).Value).Size switch
-                {
-                    16 => BlockwisePayloadSize._16,
-                    32 => BlockwisePayloadSize._32,
-                    64 => BlockwisePayloadSize._64,
-                    128 => BlockwisePayloadSize._128,
-                    256 => BlockwisePayloadSize._256,
-                    512 => BlockwisePayloadSize._512,
-                    1024 => BlockwisePayloadSize._1024,
-                    _ => throw new ArgumentOutOfRangeException()
-                };
-        }
+        if (block1Option == null) return null;
+
+        return CoapBlockTransferOptionValueDecoder
+                .Decode(((CoapMessageOptionUintValue)block1Option.Value).Value).Size switch
+            {
+                16 => BlockwisePayloadSize._16,
+                32 => BlockwisePayloadSize._32,
+                64 => BlockwisePayloadSize._64,
+                128 => BlockwisePayloadSize._128,
+                256 => BlockwisePayloadSize._256,
+                512 => BlockwisePayloadSize._512,
+                1024 => BlockwisePayloadSize._1024,
+                _ => throw new ArgumentOutOfRangeException()
+            };
+    }
+
+    private BlockwisePayloadSize? GetBlock2Size(IReadOnlyCollection<CoapMessageOption> options)
+    {
+        var block1Option = options.SingleOrDefault(op => op.Number == CoapMessageOptionNumber.Block2);
+
+        if (block1Option == null) return null;
+
+        return CoapBlockTransferOptionValueDecoder
+                .Decode(((CoapMessageOptionUintValue)block1Option.Value).Value).Size switch
+            {
+                16 => BlockwisePayloadSize._16,
+                32 => BlockwisePayloadSize._32,
+                64 => BlockwisePayloadSize._64,
+                128 => BlockwisePayloadSize._128,
+                256 => BlockwisePayloadSize._256,
+                512 => BlockwisePayloadSize._512,
+                1024 => BlockwisePayloadSize._1024,
+                _ => throw new ArgumentOutOfRangeException()
+            };
     }
 
     private bool GetHasResponseMoreData(IReadOnlyCollection<CoapMessageOption> options)
