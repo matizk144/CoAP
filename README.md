@@ -4,22 +4,19 @@
 <br/>
 </p>
 
-[![NuGet Badge](https://buildstats.info/nuget/CoAPnet)](https://www.nuget.org/packages/CoAPnet)
-![Size](https://img.shields.io/github/repo-size/chkr1011/CoAPnet.svg)
-[![Join the chat at https://gitter.im/CoAPnet/community](https://badges.gitter.im/CoAPnet/community.svg)](https://gitter.im/CoAPnet/community?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](https://raw.githubusercontent.com/chkr1011/CoAPnet/master/LICENSE)
 
-# CoAPnet
+# Matizk.CoAP
 
-CoAPnet is a high performance .NET library for CoAPnet based communication. The library runs on macOS, Linux and Windows. It also supports UDP, DTLS, TCP and TLS connections.
+CoAPnet is a high performance .NET library for CoAPnet based communication. The library compiled for .NET9
 
 ## Features
 
 ### Protocol
 
 * Core protocol (RFC 7252)
-* Block transfer (RFC 7959)
-* Observe (RFC 7641)
+* Block transfer (RFC 7959) - Complete (Block1 & Block2) with early and late negotiation
+* Observe (RFC 7641) - _Not implemented yet_
 
 ### General
 
@@ -42,42 +39,22 @@ CoAPnet is a high performance .NET library for CoAPnet based communication. The 
 
 ## Supported frameworks
 
-* .NET Standard 1.3+
-* .NET Core 1.1+
-* .NET Core App 1.1+
-* .NET Framework 4.5.2+ (x86, x64, AnyCPU)
-* Mono 5.2+
-* Universal Windows Platform (UWP) 10.0.10240+ (x86, x64, ARM, AnyCPU, Windows 10 IoT Core)
-* Xamarin.Android 7.5+
-* Xamarin.iOS 10.14+
+* .NET 9
 
 ## Nuget
 
-This library is available as a nuget package: <https://www.nuget.org/packages/CoAPnet/>
-
-## Examples
-
-Please find examples and the documentation at the Wiki of this repository (<https://github.com/chkr1011/CoAPnet/wiki>).
+This library is available as a nuget package: <https://www.nuget.org/packages/Matizk.CoAP/>
 
 ## Contributions
 
 If you want to contribute to this project just create a pull request. But only pull requests which are matching the code style of this library will be accepted. Before creating a pull request please have a look at the library to get an overview of the required style.
 Also additions and updates in the Wiki are welcome.
 
-## References
-
-This library is used in the following projects:
-
-* This library can be used to communicate with the IKEA Tradfri gateway.
-* Wirehome.Core (Open Source Home Automation system for .NET Core, <https://github.com/chkr1011/Wirehome.Core>)
-
-If you use this library and want to see your project here please create a pull request.
-
 ## License
 
 MIT License
 
-CoAPnet Copyright (c) 2016-2022 Christian Kratky
+CoAPnet Copyright (c) 2016-2025 Christian Kratky & Mateusz Kramarz
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal

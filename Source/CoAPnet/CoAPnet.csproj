@@ -16,22 +16,22 @@
 	</Target>
 
 	<PropertyGroup>
-		<AssemblyName>CoAPnet</AssemblyName>
+		<AssemblyName>matizk.CoAP</AssemblyName>
 		<RootNamespace>CoAPnet</RootNamespace>
 		<GeneratePackageOnBuild>True</GeneratePackageOnBuild>
-		<Company>The contributors of CoAPnet</Company>
-		<Product>CoAPnet</Product>
-		<Description>CoAPnet is a high performance .NET library for CoAP based communication. It provides a CoAP client and a CoAP server. It also has DTLS support out of the box.</Description>
-		<Authors>The contributors of CoAPnet</Authors>
-		<PackageId>CoAPnet</PackageId>
+		<Company>The contributors of matizk.CoAP</Company>
+		<Product>Matizk.CoAP</Product>
+		<Description>Matizk.CoAP is a high performance .NET library for CoAP based communication. It provides a CoAP client and a CoAP server. It also has DTLS support out of the box.</Description>
+		<Authors>The contributors of matizk.CoAP</Authors>
+		<PackageId>Matizk.CoAP</PackageId>
 		<SignAssembly>false</SignAssembly>
 		<DelaySign>false</DelaySign>
 		<PublishRepositoryUrl>true</PublishRepositoryUrl>
 		<IncludeSymbols>true</IncludeSymbols>
 		<SymbolPackageFormat>snupkg</SymbolPackageFormat>
-		<Copyright>Christian Kratky 2019-2021</Copyright>
-		<PackageProjectUrl>https://github.com/chkr1011/CoAPnet</PackageProjectUrl>
-		<RepositoryUrl>https://github.com/chkr1011/CoAPnet.git</RepositoryUrl>
+		<Copyright>Christian Kratky &amp; Mateusz Kramarz 2019-2025</Copyright>
+		<PackageProjectUrl>https://github.com/matizk144/CoAP</PackageProjectUrl>
+		<RepositoryUrl>https://github.com/matizk144/CoAP.git</RepositoryUrl>
 		<RepositoryType>git</RepositoryType>
 		<PackageTags>CoAP Constrained Application Protocol CoAPClient CoAPServer Server NETStandard IoT InternetOfThings Messaging Hardware Arduino Sensor Actuator M2M ESP Smart Home Cities Automation Xamarin Blazor</PackageTags>
 		<NeutralLanguage>en-US</NeutralLanguage>
