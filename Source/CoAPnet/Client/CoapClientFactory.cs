@@ -13,14 +13,16 @@ public static class CoapClientFactory
         ICoapMessageLevelClient coapMessageClient = options.Retries != null ?
             new RetriesCoapMessageLevelClient(options.Retries.ToImmutableList(), logger) :
             new RawCoapMessageLevelClient(logger);
-        return new SequentialCoapClient(coapMessageClient);
+        return options.Blockwise != null ?
+            new BlockwiseSequentialCoapClient(coapMessageClient, options.Blockwise) : 
+            new SequentialCoapClient(coapMessageClient);
     }
 }
 
 public class CoapClientFactoryOptions
 {
     internal IReadOnlyCollection<TimeSpan>? Retries { get; set; }
-    internal uint? MaxBlockwiseSize { get; set; }
+    internal BlockwiseMessageOptions? Blockwise { get; set; }
 
     public CoapClientFactoryOptions AddRetiresMechanism(IReadOnlyCollection<TimeSpan> retries)
     {
@@ -28,9 +30,9 @@ public class CoapClientFactoryOptions
         return this;
     }
 
-    public CoapClientFactoryOptions SetBlockwiseSize(uint maxBlockwiseSize)
+    public CoapClientFactoryOptions EnableBlockwise(BlockwiseMessageOptions blockwiseMessageOptions)
     {
-        MaxBlockwiseSize = maxBlockwiseSize;
+        Blockwise = blockwiseMessageOptions;
         return this;
     }
 }

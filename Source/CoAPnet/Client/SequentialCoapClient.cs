@@ -6,13 +6,13 @@ namespace CoAPnet.Client;
 internal sealed class SequentialCoapClient : BaseCoapClient
 {
     private readonly SemaphoreSlim _requestSemaphore = new(1);
-    private readonly CoapRequestMessageCreator _requestMessageCreator;
+    private readonly CoapRequestToMessageConverter _requestToMessageConverter;
     private readonly CoapMessageToResponseConverter _messageToResponseConverter = new();
 
     public SequentialCoapClient(ICoapMessageLevelClient coapMessageLevelClient)
         : base(coapMessageLevelClient)
     {
-        _requestMessageCreator = new(CoapMessageIdProvider);
+        _requestToMessageConverter = new(CoapMessageIdProvider);
     }
 
     public override async Task<CoapResponse> RequestAsync(CoapRequest request, CancellationToken cancellationToken)
@@ -21,7 +21,7 @@ internal sealed class SequentialCoapClient : BaseCoapClient
 
         await _requestSemaphore.WaitAsync(cancellationToken);
 
-        var requestMessage = _requestMessageCreator.Convert(request);
+        var requestMessage = _requestToMessageConverter.Convert(request);
         try
         {
             var response = await Send(requestMessage, cancellationToken);

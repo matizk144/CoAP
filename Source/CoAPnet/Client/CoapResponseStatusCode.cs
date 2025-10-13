@@ -9,6 +9,7 @@ public enum CoapResponseStatusCode
     Valid = 203,
     Changed = 204,
     Content = 205,
+    Continue = 231,
 
     BadRequest = 400,
     Unauthorized = 401,
@@ -17,6 +18,7 @@ public enum CoapResponseStatusCode
     NotFound = 404,
     MethodNotAllowed = 405,
     NotAcceptable = 406,
+    RequestEntityIncomplete = 408,
     PreconditionFailed = 412,
     RequestEntityTooLarge = 413,
     UnsupportedContentFormat = 415,

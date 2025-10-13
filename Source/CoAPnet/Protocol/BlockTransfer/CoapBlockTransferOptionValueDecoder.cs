@@ -1,5 +1,4 @@
 ﻿using CoAPnet.Exceptions;
-using System;
 
 namespace CoAPnet.Protocol.BlockTransfer
 {

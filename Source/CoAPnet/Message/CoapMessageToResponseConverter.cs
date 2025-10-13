@@ -76,6 +76,11 @@ internal sealed class CoapMessageToResponseConverter
             return CoapResponseStatusCode.Content;
         }
 
+        if (message.Code.Equals(CoapMessageCodes.Continue))
+        {
+            return CoapResponseStatusCode.Continue;
+        }
+
         if (message.Code.Equals(CoapMessageCodes.BadRequest))
         {
             return CoapResponseStatusCode.BadRequest;
@@ -109,6 +114,11 @@ internal sealed class CoapMessageToResponseConverter
         if (message.Code.Equals(CoapMessageCodes.NotAcceptable))
         {
             return CoapResponseStatusCode.NotAcceptable;
+        }
+
+        if (message.Code.Equals(CoapMessageCodes.RequestEntityIncomplete))
+        {
+            return CoapResponseStatusCode.RequestEntityIncomplete;
         }
 
         if (message.Code.Equals(CoapMessageCodes.PreconditionFailed))

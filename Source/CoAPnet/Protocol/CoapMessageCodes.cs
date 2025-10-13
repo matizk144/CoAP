@@ -14,6 +14,7 @@ internal static class CoapMessageCodes
     public static CoapMessageCode Valid { get; } = new(2, 3);
     public static CoapMessageCode Changed { get; } = new(2, 4);
     public static CoapMessageCode Content { get; } = new(2, 5);
+    public static CoapMessageCode Continue { get; } = new(2, 31);
 
     public static CoapMessageCode BadRequest { get; } = new(4, 0);
     public static CoapMessageCode Unauthorized { get; } = new(4, 1);
@@ -22,6 +23,7 @@ internal static class CoapMessageCodes
     public static CoapMessageCode NotFound { get; } = new(4, 4);
     public static CoapMessageCode MethodNotAllowed { get; } = new(4, 5);
     public static CoapMessageCode NotAcceptable { get; } = new(4, 6);
+    public static CoapMessageCode RequestEntityIncomplete { get; } = new(4, 8);
     public static CoapMessageCode PreconditionFailed { get; } = new(4, 12);
     public static CoapMessageCode RequestEntityTooLarge { get; } = new(4, 13);
     public static CoapMessageCode UnsupportedContentFormat { get; } = new(4, 15);

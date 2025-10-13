@@ -8,7 +8,7 @@ internal sealed class CoapRequestToMessageConverter(CoapMessageIdProvider coapMe
 {
     readonly CoapMessageOptionFactory _optionFactory = new CoapMessageOptionFactory();
 
-    public CoapMessage Convert(CoapRequest request)
+    public CoapMessage Convert(CoapRequest request, IReadOnlyCollection<CoapMessageOption>? additionalOptions = null)
     {
         List<CoapMessageOption> options = [];
 
@@ -16,6 +16,11 @@ internal sealed class CoapRequestToMessageConverter(CoapMessageIdProvider coapMe
         ApplyUriPort(options, request);
         ApplyUriPath(options, request);
         ApplyUriQuery(options, request);
+
+        if (additionalOptions != null)
+        {
+            options.AddRange(additionalOptions);
+        }
 
         var message = new CoapMessage
         {

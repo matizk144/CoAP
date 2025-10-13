@@ -1,5 +1,4 @@
 ﻿using CoAPnet.Exceptions;
-using System;
 
 namespace CoAPnet.Protocol.BlockTransfer
 {
@@ -14,7 +13,7 @@ namespace CoAPnet.Protocol.BlockTransfer
 
             if (value.Size > 1024)
             {
-                throw new CoapProtocolViolationException("Block2 size max invalid (max 1024).");
+                throw new CoapProtocolViolationException("Block size max invalid (max 1024).");
             }
 
             var result = 0U;
