@@ -12,6 +12,7 @@ internal sealed class RetriesCoapMessageLevelClient(ImmutableList<TimeSpan> retr
 
         while (retriesCount < retryTimeouts.Count)
         {
+            cancellationToken.ThrowIfCancellationRequested();
             try
             {
                 using var timeoutToken = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
