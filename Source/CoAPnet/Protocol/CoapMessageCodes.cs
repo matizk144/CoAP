@@ -27,6 +27,7 @@ internal static class CoapMessageCodes
     public static CoapMessageCode PreconditionFailed { get; } = new(4, 12);
     public static CoapMessageCode RequestEntityTooLarge { get; } = new(4, 13);
     public static CoapMessageCode UnsupportedContentFormat { get; } = new(4, 15);
+    public static CoapMessageCode TooManyRequests { get; } = new(4, 29);
 
     public static CoapMessageCode InternalServerError { get; } = new(5, 0);
     public static CoapMessageCode NotImplemented { get; } = new(5, 1);

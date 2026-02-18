@@ -22,6 +22,7 @@ public enum CoapResponseStatusCode
     PreconditionFailed = 412,
     RequestEntityTooLarge = 413,
     UnsupportedContentFormat = 415,
+    TooManyRequests = 429,
 
     InternalServerError = 500,
     NotImplemented = 501,

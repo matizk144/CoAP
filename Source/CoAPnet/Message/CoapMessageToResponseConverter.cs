@@ -136,6 +136,11 @@ internal sealed class CoapMessageToResponseConverter
             return CoapResponseStatusCode.UnsupportedContentFormat;
         }
 
+        if (message.Code.Equals(CoapMessageCodes.TooManyRequests))
+        {
+            return CoapResponseStatusCode.TooManyRequests;
+        }
+
         if (message.Code.Equals(CoapMessageCodes.InternalServerError))
         {
             return CoapResponseStatusCode.InternalServerError;
