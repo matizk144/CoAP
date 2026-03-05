@@ -1,13 +1,4 @@
-﻿using System;
-using System.IO;
-
-namespace CoAPnet.Exceptions
+﻿namespace CoAPnet.Exceptions
 {
-    public class CoapCommunicationException : IOException
-    {
-        public CoapCommunicationException(string message, Exception exception)
-            : base(message, exception)
-        {
-        }
-    }
+    public class CoapCommunicationException(string message, Exception exception) : IOException(message, exception);
 }

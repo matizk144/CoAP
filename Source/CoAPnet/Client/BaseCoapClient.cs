@@ -1,4 +1,5 @@
-﻿using CoAPnet.CoapMessageLevelClient;
+﻿using CoAPnet.Client.Options;
+using CoAPnet.CoapMessageLevelClient;
 using CoAPnet.Message;
 using CoAPnet.Protocol;
 
@@ -23,7 +24,7 @@ internal abstract class BaseCoapClient(ICoapMessageLevelClient coapMessageLevelC
     public Task ConnectAsync(CoapClientConnectOptions options, CancellationToken cancellationToken) =>
         coapMessageLevelClient.ConnectAsync(options, cancellationToken);
 
-    public abstract Task<CoapResponse> RequestAsync(CoapRequest request, CancellationToken cancellationToken);
+    public abstract Task<CoapResponse> RequestAsync(CoapRequest request, CancellationToken cancellationToken, Action<IRequestOptions>? options = null);
 
     //public Task<CoapObserveResponse> ObserveAsync(CoapObserveOptions options, CancellationToken cancellationToken) =>
     //    throw new NotSupportedException();

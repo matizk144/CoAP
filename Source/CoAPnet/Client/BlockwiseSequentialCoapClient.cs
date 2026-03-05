@@ -1,4 +1,6 @@
-﻿using CoAPnet.CoapMessageLevelClient;
+﻿using CoAPnet.Client.Options;
+using CoAPnet.CoapMessageLevelClient;
+using CoAPnet.Exceptions;
 using CoAPnet.Message;
 using CoAPnet.Protocol;
 using CoAPnet.Protocol.BlockTransfer;
@@ -20,9 +22,12 @@ internal sealed class BlockwiseSequentialCoapClient : BaseCoapClient
         _requestToMessageConverter = new(CoapMessageIdProvider);
     }
 
-    public override async Task<CoapResponse> RequestAsync(CoapRequest request, CancellationToken cancellationToken)
+    public override async Task<CoapResponse> RequestAsync(CoapRequest request, CancellationToken cancellationToken, Action<IRequestOptions>? options = null)
     {
         if (IsDisposed) throw new ObjectDisposedException(GetType().ToString());
+
+        var requestOptions = new RequestOptions();
+        options?.Invoke(requestOptions);
 
         await _requestSemaphore.WaitAsync(cancellationToken);
 
@@ -31,9 +36,9 @@ internal sealed class BlockwiseSequentialCoapClient : BaseCoapClient
             CoapMessage? lastCoapMessage = null;
             if (request.Payload.Count > 0)
             {
-                lastCoapMessage = await SendRequest(request, cancellationToken);
+                lastCoapMessage = await SendRequest(request, requestOptions, cancellationToken);
             }
-            var response = await GetResponse(request, lastCoapMessage, cancellationToken);
+            var response = await GetResponse(request, requestOptions, lastCoapMessage, cancellationToken);
 
             return _messageToResponseConverter.Convert(response.LastCoapMessage, response.Bytes);
         }
@@ -43,7 +48,7 @@ internal sealed class BlockwiseSequentialCoapClient : BaseCoapClient
         }
     }
 
-    private async Task<CoapMessage> SendRequest(CoapRequest request, CancellationToken cancellationToken)
+    private async Task<CoapMessage> SendRequest(CoapRequest request, RequestOptions requestOptions, CancellationToken cancellationToken)
     {
         if (request.Payload.Count <= 0)
         {
@@ -104,9 +109,7 @@ internal sealed class BlockwiseSequentialCoapClient : BaseCoapClient
                 Payload = blockPayload
             };
 
-            var requestMessage = _requestToMessageConverter.Convert(blockCoapRequest, blockwiseOptions);
-
-            responseCoapMessage = await Send(requestMessage, cancellationToken);
+            responseCoapMessage = await SendAndHandleResponse(blockCoapRequest, blockwiseOptions, requestOptions, cancellationToken);
             bytesAlreadySend += blockPayload.Length;
             requestBlockSize = GetBlock1Size(responseCoapMessage.Options);
         }
@@ -114,7 +117,7 @@ internal sealed class BlockwiseSequentialCoapClient : BaseCoapClient
         return responseCoapMessage!;
     }
 
-    private async Task<(byte[] Bytes, CoapMessage LastCoapMessage)> GetResponse(CoapRequest generalCoapRequest, CoapMessage? lastCoapMessage, CancellationToken cancellationToken)
+    private async Task<(byte[] Bytes, CoapMessage LastCoapMessage)> GetResponse(CoapRequest generalCoapRequest, RequestOptions requestOptions, CoapMessage? lastCoapMessage, CancellationToken cancellationToken)
     {
         bool hasMoreData;
         BlockwisePayloadSize? responseBlockSize;
@@ -157,9 +160,7 @@ internal sealed class BlockwiseSequentialCoapClient : BaseCoapClient
                 Options = generalCoapRequest.Options,
             };
 
-            var requestMessage = _requestToMessageConverter.Convert(blockCoapRequest, blockwiseOptions);
-
-            lastResponseCoapMessage = await Send(requestMessage, cancellationToken);
+            lastResponseCoapMessage = await SendAndHandleResponse(blockCoapRequest, blockwiseOptions, requestOptions, cancellationToken);
             responseBytes = [.. responseBytes, .. lastResponseCoapMessage.Payload.ToArray()];
             bytesAlreadyReceived = responseBytes.Length;
             responseBlockSize = GetBlock2Size(lastResponseCoapMessage.Options);
@@ -168,6 +169,38 @@ internal sealed class BlockwiseSequentialCoapClient : BaseCoapClient
 
         return (responseBytes, lastResponseCoapMessage!);
     }
+
+    private async Task<CoapMessage> SendAndHandleResponse(CoapRequest blockCoapRequest, IReadOnlyCollection<CoapMessageOption> blockwiseOptions, RequestOptions requestOptions, CancellationToken cancellationToken)
+    {
+        CoapMessage responseCoapMessage;
+        while (true)
+        {
+            var requestMessage = _requestToMessageConverter.Convert(blockCoapRequest, blockwiseOptions);
+            responseCoapMessage = await Send(requestMessage, cancellationToken);
+
+            if (requestOptions?.BitwiseHandler != null)
+            {
+                CoapResponse response = _messageToResponseConverter.Convert(responseCoapMessage, responseCoapMessage.Payload);
+                var handleStatus = requestOptions.BitwiseHandler.Invoke(response.StatusCode);
+
+                switch (handleStatus)
+                {
+                    default:
+                    case CoapResponseBitwiseHandler.Continue:
+                        break;
+                    case CoapResponseBitwiseHandler.Repeat:
+                        continue;
+                    case CoapResponseBitwiseHandler.Interrupt:
+                        throw new BitwiseCoapCommunicationInterruptedException(response);
+                }
+            }
+
+            break;
+        }
+
+        return responseCoapMessage;
+    }
+
 
     private ushort CalculateBlockNum(int bytesAlreadySendReceived, BlockwisePayloadSize blockSize)
     {

@@ -2,15 +2,11 @@
 
 namespace CoAPnet.Exceptions
 {
-    public class CoapCommunicationTimedOutException : CoapCommunicationException
+    public class CoapCommunicationTimedOutException(string message, Exception exception)
+        : CoapCommunicationException(message, exception)
     {
         public CoapCommunicationTimedOutException()
-            : base("CoAP communication timed out.", null)
-        {
-        }
-
-        public CoapCommunicationTimedOutException(string message, Exception exception)
-            : base(message, exception)
+            : this("CoAP communication timed out.", null)
         {
         }
     }

@@ -1,4 +1,5 @@
-﻿using CoAPnet.CoapMessageLevelClient;
+﻿using CoAPnet.Client.Options;
+using CoAPnet.CoapMessageLevelClient;
 using CoAPnet.Message;
 
 namespace CoAPnet.Client;
@@ -15,9 +16,12 @@ internal sealed class SequentialCoapClient : BaseCoapClient
         _requestToMessageConverter = new(CoapMessageIdProvider);
     }
 
-    public override async Task<CoapResponse> RequestAsync(CoapRequest request, CancellationToken cancellationToken)
+    public override async Task<CoapResponse> RequestAsync(CoapRequest request, CancellationToken cancellationToken, Action<IRequestOptions>? options = null)
     {
         if (IsDisposed) throw new ObjectDisposedException(GetType().ToString());
+
+        var requestOptions = new RequestOptions();
+        options?.Invoke(requestOptions);
 
         await _requestSemaphore.WaitAsync(cancellationToken);
 
