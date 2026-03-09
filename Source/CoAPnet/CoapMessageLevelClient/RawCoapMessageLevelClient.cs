@@ -23,7 +23,7 @@ internal class RawCoapMessageLevelClient(ILogger logger) : ICoapMessageLevelClie
         {
             cancellationToken.ThrowIfCancellationRequested();
             var responseMessage = await _lowLevelCoapClient.ReceiveAsync(cancellationToken);
-            if (responseMessage == null)
+            if (responseMessage == null || responseMessage.Id != coapMessage.Id)
             {
                 await Task.Yield();
                 continue;
