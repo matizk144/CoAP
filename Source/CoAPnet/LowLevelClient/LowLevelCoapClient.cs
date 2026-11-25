@@ -86,7 +86,7 @@ internal sealed class LowLevelCoapClient(ILogger logger) : ILowLevelCoapClient
         {
             var transportLayerConnectOptions = new CoapTransportLayerConnectOptions
             {
-                EndPoint = await ResolveIpEndPoint(options).ConfigureAwait(false)
+                EndPoint = await CreateEndPoint(options)
             };
 
             await _transportLayerAdapter.ConnectAsync(transportLayerConnectOptions, cancellationToken)
@@ -97,6 +97,12 @@ internal sealed class LowLevelCoapClient(ILogger logger) : ILowLevelCoapClient
             _transportLayerAdapter.Dispose();
             throw;
         }
+    }
+
+    async Task<IPEndPoint> CreateEndPoint(CoapClientConnectOptions options)
+    {
+        if (string.IsNullOrEmpty(options.Host)) return new IPEndPoint(new IPAddress("\0\0\0\0"u8), 0);
+        return await ResolveIpEndPoint(options).ConfigureAwait(false);
     }
 
     private async Task<IPEndPoint> ResolveIpEndPoint(CoapClientConnectOptions connectOptions)
